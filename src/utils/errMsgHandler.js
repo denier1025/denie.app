@@ -10,6 +10,6 @@ module.exports = err => {
 
     return messages;
   } else {
-    return err.message
+    return err.message;
   }
 };

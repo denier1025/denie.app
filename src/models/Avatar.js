@@ -31,9 +31,9 @@ AvatarSchema.methods.toJSON = function() {
 
   const avatarObject = avatar.toObject();
 
-  avatarObject.base64Data = avatarObject.buffer.toString("base64")
+  avatarObject.base64Data = avatarObject.buffer.toString("base64");
 
-  delete avatarObject.buffer
+  delete avatarObject.buffer;
   delete avatarObject.owner;
 
   return avatarObject;

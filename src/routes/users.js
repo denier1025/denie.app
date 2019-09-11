@@ -6,8 +6,8 @@ const errMsgHandler = require("../utils/errMsgHandler");
 const upload = require("../middleware/upload");
 const checkFieldsForAccess = require("../middleware/checkFieldsForAccess");
 const transformReceivedDataAndSave = require("../middleware/transformReceivedDataAndSave");
-const internalServerError = require("./sharedParts/internalServerError")
-const sendingConfirmationLink = require("./sharedParts/sendingConfirmationLink")
+const sendingErrors = require("./sharedParts/sendingErrors");
+const sendingConfirmationLink = require("./sharedParts/sendingConfirmationLink");
 
 // @route   POST api/users
 // @desc    Register a user
@@ -25,7 +25,7 @@ router.post(
         token: crypto.randomBytes(16).toString("hex")
       }).save();
 
-      await sendingConfirmationLink(req, req.user, emailConfirmationToken)
+      await sendingConfirmationLink(req, emailConfirmationToken);
 
       res.status(201).json({
         message: `a confirmation link has been sent to ${req.user.email.address}`,
@@ -39,7 +39,12 @@ router.post(
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
-        internalServerError(err)
+        sendingErrors(err);
+
+        res.status(500).json({
+          name: "InternalServerError",
+          message: "admin already notified about this error"
+        });
       }
     }
   }
@@ -73,7 +78,12 @@ router.patch(
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
-        internalServerError(err)
+        sendingErrors(err);
+
+        res.status(500).json({
+          name: "InternalServerError",
+          message: "admin already notified about this error"
+        });
       }
     }
   }
@@ -99,7 +109,12 @@ router.post(
           .status(400)
           .json({ name: "ValidationError", message: errMsgHandler(err) });
       } else {
-        internalServerError(err)
+        sendingErrors(err);
+
+        res.status(500).json({
+          name: "InternalServerError",
+          message: "admin already notified about this error"
+        });
       }
     }
   }
@@ -126,7 +141,12 @@ router.get("/current/avatar", auth, async (req, res) => {
     if (err.name === "NotFoundError") {
       res.status(404).json(err);
     } else {
-      internalServerError(err)
+      sendingErrors(err);
+
+      res.status(500).json({
+        name: "InternalServerError",
+        message: "admin already notified about this error"
+      });
     }
   }
 });
@@ -154,7 +174,12 @@ router.delete("/current/avatar", auth, async (req, res) => {
     if (err.name === "NotFoundError") {
       res.status(404).json(err);
     } else {
-      internalServerError(err)
+      sendingErrors(err);
+
+      res.status(500).json({
+        name: "InternalServerError",
+        message: "admin already notified about this error"
+      });
     }
   }
 });

@@ -117,7 +117,7 @@ module.exports = (req, res, next) => {
     if (err.name === "AccessError") {
       res.status(403).json(err);
     } else {
-      next(err)
+      next(err);
     }
   }
 };

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const sendingErrors = require("../routes/sharedParts/sendingErrors");
 
 module.exports = async () => {
   try {
@@ -7,9 +8,10 @@ module.exports = async () => {
       useCreateIndex: true,
       useFindAndModify: false
     });
-    console.log("MongoDB is connected!")
+    console.log("MongoDB is connected!");
   } catch (err) {
-    // TODO: send an email
+    sendingErrors(err);
+
     process.exit(1);
   }
 };

@@ -3,8 +3,7 @@ const router = require("express").Router();
 const User = require("../../models/User");
 const EmailConfirmationToken = require("../../models/EmailConfirmationToken");
 const errMsgHandler = require("../../utils/errMsgHandler");
-const internalServerError = require("../sharedParts/internalServerError")
-const inconsistencyError = require("../sharedParts/inconsistencyError")
+const sendingErrors = require("../sharedParts/sendingErrors");
 
 // @route   GET api/confirmation/email/:token
 // @desc    Confirm a registered email
@@ -51,10 +50,13 @@ router.get("/:token", async (req, res) => {
   } catch (err) {
     if (err.name === "ConfirmationError") {
       res.status(400).json(err);
-    } else if (err.name === "InconsistencyError") {
-      inconsistencyError(err)
     } else {
-      internalServerError(err)
+      sendingErrors(err);
+
+      res.status(500).json({
+        name: "InternalServerError",
+        message: "admin already notified about this error"
+      });
     }
   }
 });
@@ -89,7 +91,7 @@ router.post("/resend", async (req, res) => {
       token: crypto.randomBytes(16).toString("hex")
     }).save();
 
-    await sendingConfirmationLink(req, user, emailConfirmationToken)
+    await sendingConfirmationLink(req, user, emailConfirmationToken);
 
     res.json({
       message: `a confirmation link has been sent to ${user.email.address}`,
@@ -99,7 +101,12 @@ router.post("/resend", async (req, res) => {
     if (err.name === "ConfirmationError") {
       res.status(400).json(err);
     } else {
-      internalServerError(err)
+      sendingErrors(err);
+
+      res.status(500).json({
+        name: "InternalServerError",
+        message: "admin already notified about this error"
+      });
     }
   }
 });
@@ -158,7 +165,12 @@ router.post("/change", async (req, res) => {
     } else if (err.name === "ConfirmationError") {
       res.status(400).json(err);
     } else {
-      internalServerError(err)
+      sendingErrors(err);
+
+      res.status(500).json({
+        name: "InternalServerError",
+        message: "admin already notified about this error"
+      });
     }
   }
 });

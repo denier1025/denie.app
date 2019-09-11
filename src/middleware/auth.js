@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { expiresIn, refreshPeriod } = require("../settings/global");
 const AuthToken = require("../models/AuthToken");
-const inconsistencyError = require("../routes/sharedParts/inconsistencyError")
 
 module.exports = async (req, res, next) => {
   let token = req.header("Authorization");
@@ -19,19 +18,19 @@ module.exports = async (req, res, next) => {
     });
 
     if (!authToken) {
-      const error = new Error()
-      error.name = "JsonWebTokenError"
-      error.message = "no auth token is found"
-      throw error
+      const error = new Error();
+      error.name = "JsonWebTokenError";
+      error.message = "no auth token is found";
+      throw error;
     }
 
     await authToken.populate("owner").execPopulate();
 
     if (!authToken.owner) {
-      const error = new Error()
-      error.name = "InconsistencyError"
-      error.message = "unable to find a user for an existing token"
-      throw error
+      const error = new Error();
+      error.name = "InconsistencyError";
+      error.message = "unable to find a user for an existing token";
+      throw error;
     }
 
     // TODO: isFrozen
@@ -41,18 +40,13 @@ module.exports = async (req, res, next) => {
 
     next();
   } catch (err) {
-    if (
-      err.name === "TokenExpiredError" ||
-      err.name === "JsonWebTokenError"
-    ) {
+    if (err.name === "TokenExpiredError" || err.name === "JsonWebTokenError") {
       res.status(403).json({
         name: "AuthorizationError",
         message: "please, get an authentication"
       });
-    } else if (err.name === "InconsistencyError") {
-      inconsistencyError(err)
     } else {
-      next(err)
+      next(err);
     }
 
     // if (err.name === "TokenExpiredError") {

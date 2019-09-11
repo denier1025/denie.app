@@ -26,7 +26,7 @@ module.exports = async (req, res, next) => {
     if (err.name === "ValidationError") {
       res.status(400).json(err);
     } else {
-      next(err)
+      next(err);
     }
   }
 };

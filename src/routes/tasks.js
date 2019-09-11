@@ -4,7 +4,7 @@ const auth = require("../middleware/auth");
 const errMsgHandler = require("../utils/errMsgHandler");
 const checkFieldsForAccess = require("../middleware/checkFieldsForAccess");
 const transformReceivedDataAndSave = require("../middleware/transformReceivedDataAndSave");
-const internalServerError = require("./sharedParts/internalServerError")
+const sendingErrors = require("./sharedParts/sendingErrors");
 
 // @route   GET api/tasks?completed=true
 // @route   GET api/tasks?limit=10&skip=0
@@ -38,7 +38,12 @@ router.get("/", auth, async (req, res) => {
       .execPopulate();
     res.json(req.user.tasks);
   } catch (err) {
-    internalServerError(err)
+    sendingErrors(err);
+
+    res.status(500).json({
+      name: "InternalServerError",
+      message: "admin already notified about this error"
+    });
   }
 });
 
@@ -64,7 +69,12 @@ router.get("/:id", auth, async (req, res) => {
     if (err.name === "NotFoundError") {
       res.status(404).json(err);
     } else {
-      internalServerError(err)
+      sendingErrors(err);
+
+      res.status(500).json({
+        name: "InternalServerError",
+        message: "admin already notified about this error"
+      });
     }
   }
 });
@@ -90,7 +100,12 @@ router.post(
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
-        internalServerError(err)
+        sendingErrors(err);
+
+        res.status(500).json({
+          name: "InternalServerError",
+          message: "admin already notified about this error"
+        });
       }
     }
   }
@@ -110,7 +125,7 @@ router.patch(
 
       res.json(req.task);
     } catch (err) {
-      if ((err.name === "NotFoundError")) {
+      if (err.name === "NotFoundError") {
         res.status(404).json(err);
       } else if (err.name === "ValidationError") {
         res
@@ -119,7 +134,12 @@ router.patch(
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
-        internalServerError(err)
+        sendingErrors(err);
+
+        res.status(500).json({
+          name: "InternalServerError",
+          message: "admin already notified about this error"
+        });
       }
     }
   }
@@ -147,7 +167,12 @@ router.get("/:id", auth, async (req, res) => {
     if ((err.name = "NotFoundError")) {
       res.status(404).json(err);
     } else {
-      internalServerError(err)
+      sendingErrors(err);
+
+      res.status(500).json({
+        name: "InternalServerError",
+        message: "admin already notified about this error"
+      });
     }
   }
 });

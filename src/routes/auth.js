@@ -2,7 +2,7 @@ const router = require("express").Router();
 const auth = require("../middleware/auth");
 const User = require("../models/User");
 const AuthToken = require("../models/AuthToken");
-const internalServerError = require("./sharedParts/internalServerError")
+const sendingErrors = require("./sharedParts/sendingErrors");
 
 // @route   POST api/auth
 // @desc    Get an authentication token
@@ -22,7 +22,12 @@ router.post("/", async (req, res) => {
     if (err.name === "AuthenticationError") {
       res.status(401).json(err);
     } else {
-      internalServerError(err)
+      sendingErrors(err);
+
+      res.status(500).json({
+        name: "InternalServerError",
+        message: "admin already notified about this error"
+      });
     }
   }
 });
@@ -58,7 +63,12 @@ router.delete("/", auth, async (req, res) => {
         message: "not valid request"
       });
     } else {
-      internalServerError(err)
+      sendingErrors(err);
+
+      res.status(500).json({
+        name: "InternalServerError",
+        message: "admin already notified about this error"
+      });
     }
   }
 });
