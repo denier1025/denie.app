@@ -4,7 +4,7 @@ const auth = require("../middleware/auth");
 const errMsgHandler = require("../utils/errMsgHandler");
 const checkFieldsForAccess = require("../middleware/checkFieldsForAccess");
 const transformReceivedDataAndSave = require("../middleware/transformReceivedDataAndSave");
-const sendingErrors = require("./sharedParts/sendingErrors");
+const sendAnError = require("../utils/sendingEmails/error");
 
 // @route   GET api/tasks?completed=true
 // @route   GET api/tasks?limit=10&skip=0
@@ -38,7 +38,7 @@ router.get("/", auth, async (req, res) => {
       .execPopulate();
     res.json(req.user.tasks);
   } catch (err) {
-    sendingErrors(err);
+    sendAnError(err);
 
     res.status(500).json({
       name: "InternalServerError",
@@ -69,7 +69,7 @@ router.get("/:id", auth, async (req, res) => {
     if (err.name === "NotFoundError") {
       res.status(404).json(err);
     } else {
-      sendingErrors(err);
+      sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",
@@ -100,7 +100,7 @@ router.post(
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
-        sendingErrors(err);
+        sendAnError(err);
 
         res.status(500).json({
           name: "InternalServerError",
@@ -134,7 +134,7 @@ router.patch(
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
-        sendingErrors(err);
+        sendAnError(err);
 
         res.status(500).json({
           name: "InternalServerError",
@@ -167,7 +167,7 @@ router.get("/:id", auth, async (req, res) => {
     if ((err.name = "NotFoundError")) {
       res.status(404).json(err);
     } else {
-      sendingErrors(err);
+      sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",

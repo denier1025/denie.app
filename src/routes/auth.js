@@ -2,27 +2,27 @@ const router = require("express").Router();
 const auth = require("../middleware/auth");
 const User = require("../models/User");
 const AuthToken = require("../models/AuthToken");
-const sendingErrors = require("./sharedParts/sendingErrors");
+const sendAnError = require("../utils/sendingEmails/error");
 
 // @route   POST api/auth
 // @desc    Get an authentication token
 // @access  Public
 router.post("/", async (req, res) => {
   try {
-    const user = await User.findByCredentials(req.body);
+    req.user = await User.findByCredentials(req.body);
 
-    await user.checkForEmailConfirmation();
+    await req.user.checkForEmailConfirmation();
 
     // TODO: isFrozen
 
-    const token = await user.generateAuthToken();
+    const token = await req.user.generateAuthToken();
 
     res.json({ token });
   } catch (err) {
     if (err.name === "AuthenticationError") {
       res.status(401).json(err);
     } else {
-      sendingErrors(err);
+      sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",
@@ -63,7 +63,7 @@ router.delete("/", auth, async (req, res) => {
         message: "not valid request"
       });
     } else {
-      sendingErrors(err);
+      sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",

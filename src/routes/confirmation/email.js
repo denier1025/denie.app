@@ -3,7 +3,8 @@ const router = require("express").Router();
 const User = require("../../models/User");
 const EmailConfirmationToken = require("../../models/EmailConfirmationToken");
 const errMsgHandler = require("../../utils/errMsgHandler");
-const sendingErrors = require("../sharedParts/sendingErrors");
+const sendAnError = require("../../utils/sendingEmails/error");
+const sendAConfirmationLink = require("../../utils/sendingEmails/confirmationLink");
 
 // @route   GET api/confirmation/email/:token
 // @desc    Confirm a registered email
@@ -23,9 +24,9 @@ router.get("/:token", async (req, res) => {
 
     await emailConfirmationToken.populate("owner").execPopulate();
 
-    const user = emailConfirmationToken.owner;
+    req.user = emailConfirmationToken.owner;
 
-    if (!user) {
+    if (!req.user) {
       const error = new Error();
       error.name = "InconsistencyError";
       error.message =
@@ -33,16 +34,16 @@ router.get("/:token", async (req, res) => {
       throw error;
     }
 
-    if (user.email.isConfirmed) {
+    if (req.user.email.isConfirmed) {
       const error = new Error();
       error.name = "ConfirmationError";
       error.message = "email has already been confirmed";
       throw error;
     }
 
-    user.email.isConfirmed = true;
+    req.user.email.isConfirmed = true;
 
-    await user.save();
+    await req.user.save();
 
     await emailConfirmationToken.remove();
 
@@ -51,7 +52,7 @@ router.get("/:token", async (req, res) => {
     if (err.name === "ConfirmationError") {
       res.status(400).json(err);
     } else {
-      sendingErrors(err);
+      sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",
@@ -66,42 +67,42 @@ router.get("/:token", async (req, res) => {
 // @access  Public
 router.post("/resend", async (req, res) => {
   try {
-    const user = await User.findOne({
+    req.user = await User.findOne({
       "email.address": req.body["email.address"]
     });
 
-    if (!user) {
+    if (!req.user) {
       const error = new Error();
       error.name = "ConfirmationError";
       error.message = "unable to find a user with that email";
       throw error;
     }
 
-    if (user.email.isConfirmed) {
+    if (req.user.email.isConfirmed) {
       const error = new Error();
       error.name = "ConfirmationError";
       error.message = "email has already been confirmed";
       throw error;
     }
 
-    await EmailConfirmationToken.deleteMany({ owner: user._id });
+    await EmailConfirmationToken.deleteMany({ owner: req.user._id });
 
     const emailConfirmationToken = await new EmailConfirmationToken({
-      owner: user._id,
+      owner: req.user._id,
       token: crypto.randomBytes(16).toString("hex")
     }).save();
 
-    await sendingConfirmationLink(req, user, emailConfirmationToken);
+    await sendAConfirmationLink(req, emailConfirmationToken);
 
     res.json({
-      message: `a confirmation link has been sent to ${user.email.address}`,
-      "email.address": user.email.address
+      message: `a confirmation link has been sent to ${req.user.email.address}`,
+      "email.address": req.user.email.address
     });
   } catch (err) {
     if (err.name === "ConfirmationError") {
       res.status(400).json(err);
     } else {
-      sendingErrors(err);
+      sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",
@@ -116,11 +117,11 @@ router.post("/resend", async (req, res) => {
 // @access  Public
 router.post("/change", async (req, res) => {
   try {
-    let user = await User.findOne({
+    req.user = await User.findOne({
       "email.address": req.body["email.address"]
     });
 
-    if (!user) {
+    if (!req.user) {
       const error = new Error();
       error.name = "ConfirmationError";
       error.message =
@@ -128,18 +129,18 @@ router.post("/change", async (req, res) => {
       throw error;
     }
 
-    if (user.email.isConfirmed) {
+    if (req.user.email.isConfirmed) {
       const error = new Error();
       error.name = "ConfirmationError";
       error.message = "email has already been confirmed";
       throw error;
     }
 
-    await EmailConfirmationToken.deleteMany({ owner: user._id });
+    await EmailConfirmationToken.deleteMany({ owner: req.user._id });
 
-    user.email.address = req.body["email.newAddress"];
+    req.user.email.address = req.body["email.newAddress"];
 
-    user = await user.save();
+    req.user = await req.user.save();
 
     // const updatedEmail = await User.findByIdAndUpdate(
     //   user._id,
@@ -155,7 +156,7 @@ router.post("/change", async (req, res) => {
 
     res.json({
       message: "email has been changed",
-      "email.address": user.email.address
+      "email.address": req.user.email.address
     });
   } catch (err) {
     if (err.name === "ValidationError") {
@@ -165,7 +166,7 @@ router.post("/change", async (req, res) => {
     } else if (err.name === "ConfirmationError") {
       res.status(400).json(err);
     } else {
-      sendingErrors(err);
+      sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",

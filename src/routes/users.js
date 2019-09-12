@@ -6,8 +6,8 @@ const errMsgHandler = require("../utils/errMsgHandler");
 const upload = require("../middleware/upload");
 const checkFieldsForAccess = require("../middleware/checkFieldsForAccess");
 const transformReceivedDataAndSave = require("../middleware/transformReceivedDataAndSave");
-const sendingErrors = require("./sharedParts/sendingErrors");
-const sendingConfirmationLink = require("./sharedParts/sendingConfirmationLink");
+const sendAnError = require("../utils/sendingEmails/error");
+const sendAConfirmationLink = require("../utils/sendingEmails/confirmationLink");
 
 // @route   POST api/users
 // @desc    Register a user
@@ -25,7 +25,7 @@ router.post(
         token: crypto.randomBytes(16).toString("hex")
       }).save();
 
-      await sendingConfirmationLink(req, emailConfirmationToken);
+      await sendAConfirmationLink(req, emailConfirmationToken);
 
       res.status(201).json({
         message: `a confirmation link has been sent to ${req.user.email.address}`,
@@ -39,7 +39,7 @@ router.post(
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
-        sendingErrors(err);
+        sendAnError(err);
 
         res.status(500).json({
           name: "InternalServerError",
@@ -78,7 +78,7 @@ router.patch(
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
-        sendingErrors(err);
+        sendAnError(err);
 
         res.status(500).json({
           name: "InternalServerError",
@@ -109,7 +109,7 @@ router.post(
           .status(400)
           .json({ name: "ValidationError", message: errMsgHandler(err) });
       } else {
-        sendingErrors(err);
+        sendAnError(err);
 
         res.status(500).json({
           name: "InternalServerError",
@@ -141,7 +141,7 @@ router.get("/current/avatar", auth, async (req, res) => {
     if (err.name === "NotFoundError") {
       res.status(404).json(err);
     } else {
-      sendingErrors(err);
+      sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",
@@ -174,7 +174,7 @@ router.delete("/current/avatar", auth, async (req, res) => {
     if (err.name === "NotFoundError") {
       res.status(404).json(err);
     } else {
-      sendingErrors(err);
+      sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",

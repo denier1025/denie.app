@@ -1,13 +1,6 @@
-const nodemailer = require("nodemailer");
+const transporter = require("../../settings/transporter")
 
 module.exports = async (req, emailConfirmationToken) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
   const mailOptions = {
     from: `"noreply@denie.app" <${process.env.EMAIL}>`,
     to: req.user.email.address,
