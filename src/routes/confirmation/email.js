@@ -17,7 +17,7 @@ router.get("/:token", async (req, res) => {
 
     if (!emailConfirmationToken) {
       const error = new Error();
-      error.name = "ConfirmationError";
+      error.name = "NotFoundError";
       error.message = "link is not valid, try to log in and follow the tips";
       throw error;
     }
@@ -28,7 +28,7 @@ router.get("/:token", async (req, res) => {
 
     if (!req.user) {
       const error = new Error();
-      error.name = "InconsistencyError";
+      error.name = "NotFoundError";
       error.message =
         "unable to find a user for an existing 'Email Confirmation Token'";
       throw error;
@@ -49,14 +49,16 @@ router.get("/:token", async (req, res) => {
 
     res.json({ message: "email has been confirmed" });
   } catch (err) {
-    if (err.name === "ConfirmationError") {
+    if (err.name === "NotFoundError") {
+      res.status(404).json(err);
+    } else if (err.name === "ConfirmationError") {
       res.status(400).json(err);
     } else {
       sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",
-        message: "admin already notified about this error"
+        message: "we already notified about this error"
       });
     }
   }
@@ -73,7 +75,7 @@ router.post("/resend", async (req, res) => {
 
     if (!req.user) {
       const error = new Error();
-      error.name = "ConfirmationError";
+      error.name = "NotFoundError";
       error.message = "unable to find a user with that email";
       throw error;
     }
@@ -99,14 +101,16 @@ router.post("/resend", async (req, res) => {
       "email.address": req.user.email.address
     });
   } catch (err) {
-    if (err.name === "ConfirmationError") {
+    if (err.name === "NotFoundError") {
+      res.status(404).json(err);
+    } else if (err.name === "ConfirmationError") {
       res.status(400).json(err);
     } else {
       sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",
-        message: "admin already notified about this error"
+        message: "we already notified about this error"
       });
     }
   }
@@ -123,7 +127,7 @@ router.post("/change", async (req, res) => {
 
     if (!req.user) {
       const error = new Error();
-      error.name = "ConfirmationError";
+      error.name = "NotFoundError";
       error.message =
         "incorrect autofilling fields, try to log in and follow the tips";
       throw error;
@@ -159,10 +163,12 @@ router.post("/change", async (req, res) => {
       "email.address": req.user.email.address
     });
   } catch (err) {
-    if (err.name === "ValidationError") {
-      res
-        .status(400)
-        .json({ name: "ValidationError", message: errMsgHandler(err) });
+    if (err.name === "NotFoundError") {
+      res.status(404).json(err);
+    } else if (err.name === "ValidationError") {
+      err.message = errMsgHandler(err);
+
+      res.status(400).json(err);
     } else if (err.name === "ConfirmationError") {
       res.status(400).json(err);
     } else {
@@ -170,7 +176,7 @@ router.post("/change", async (req, res) => {
 
       res.status(500).json({
         name: "InternalServerError",
-        message: "admin already notified about this error"
+        message: "we already notified about this error"
       });
     }
   }

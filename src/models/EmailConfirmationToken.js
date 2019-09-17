@@ -1,4 +1,5 @@
 const { Schema, model } = require("mongoose");
+const { ECTExpiresIn } = require("../settings/global");
 
 const EmailConfirmationTokenSchema = new Schema({
   owner: {
@@ -13,7 +14,7 @@ const EmailConfirmationTokenSchema = new Schema({
   createdAt: {
     type: Date,
     default: Date.now,
-    expires: "1h"
+    expires: ECTExpiresIn
   }
 });
 

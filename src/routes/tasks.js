@@ -42,7 +42,7 @@ router.get("/", auth, async (req, res) => {
 
     res.status(500).json({
       name: "InternalServerError",
-      message: "admin already notified about this error"
+      message: "we already notified about this error"
     });
   }
 });
@@ -73,7 +73,7 @@ router.get("/:id", auth, async (req, res) => {
 
       res.status(500).json({
         name: "InternalServerError",
-        message: "admin already notified about this error"
+        message: "we already notified about this error"
       });
     }
   }
@@ -94,9 +94,9 @@ router.post(
       res.status(201).json();
     } catch (err) {
       if (err.name === "ValidationError") {
-        res
-          .status(400)
-          .json({ name: "ValidationError", message: errMsgHandler(err) });
+        err.message = errMsgHandler(err);
+
+        res.status(400).json(err);
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
@@ -104,7 +104,7 @@ router.post(
 
         res.status(500).json({
           name: "InternalServerError",
-          message: "admin already notified about this error"
+          message: "we already notified about this error"
         });
       }
     }
@@ -128,9 +128,9 @@ router.patch(
       if (err.name === "NotFoundError") {
         res.status(404).json(err);
       } else if (err.name === "ValidationError") {
-        res
-          .status(400)
-          .json({ name: "ValidationError", message: errMsgHandler(err) });
+        err.message = errMsgHandler(err);
+
+        res.status(400).json(err);
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
@@ -138,7 +138,7 @@ router.patch(
 
         res.status(500).json({
           name: "InternalServerError",
-          message: "admin already notified about this error"
+          message: "we already notified about this error"
         });
       }
     }
@@ -171,7 +171,7 @@ router.get("/:id", auth, async (req, res) => {
 
       res.status(500).json({
         name: "InternalServerError",
-        message: "admin already notified about this error"
+        message: "we already notified about this error"
       });
     }
   }

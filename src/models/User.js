@@ -6,7 +6,7 @@ const SALT_WORK_FACTOR = 10;
 const EmailConfirmationToken = require("./EmailConfirmationToken");
 const AuthToken = require("./AuthToken");
 const validator = require("validator");
-const { expiresIn } = require("../settings/global");
+const { ATExpiresIn } = require("../settings/global");
 
 const UserSchema = new Schema(
   {
@@ -84,7 +84,7 @@ UserSchema.statics.findByCredentials = async credentials => {
 
   if (!user) {
     const error = new Error();
-    error.name = "AuthenticationError";
+    error.name = "CredentialsError";
     error.message = "invalid credentials";
     throw error;
   }
@@ -93,7 +93,7 @@ UserSchema.statics.findByCredentials = async credentials => {
 
   if (!isMatch) {
     const error = new Error();
-    error.name = "AuthenticationError";
+    error.name = "CredentialsError";
     error.message = "invalid credentials";
     throw error;
   }
@@ -130,7 +130,7 @@ UserSchema.methods.generateAuthToken = async function() {
   const user = this;
 
   const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET, {
-    expiresIn: expiresIn
+    expiresIn: ATExpiresIn
   });
 
   await new AuthToken({ owner: user._id, token }).save();
@@ -147,7 +147,7 @@ UserSchema.methods.checkForEmailConfirmation = async function() {
     });
 
     const error = new Error();
-    error.name = "AuthenticationError";
+    error.name = "ConfirmationError";
     error.message = `email has not been confirmed, ${
       emailConfirmationToken
         ? "please, check your email for confirmation link"

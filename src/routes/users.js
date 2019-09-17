@@ -33,9 +33,9 @@ router.post(
       });
     } catch (err) {
       if (err.name === "ValidationError") {
-        res
-          .status(400)
-          .json({ name: "ValidationError", message: errMsgHandler(err) });
+        err.message = errMsgHandler(err);
+
+        res.status(400).json(err);
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
@@ -43,7 +43,7 @@ router.post(
 
         res.status(500).json({
           name: "InternalServerError",
-          message: "admin already notified about this error"
+          message: "we already notified about this error"
         });
       }
     }
@@ -72,9 +72,9 @@ router.patch(
       res.json(req.user);
     } catch (err) {
       if (err.name === "ValidationError") {
-        res
-          .status(400)
-          .json({ name: "ValidationError", message: errMsgHandler(err) });
+        err.message = errMsgHandler(err);
+
+        res.status(400).json(err);
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
@@ -82,7 +82,7 @@ router.patch(
 
         res.status(500).json({
           name: "InternalServerError",
-          message: "admin already notified about this error"
+          message: "we already notified about this error"
         });
       }
     }
@@ -105,15 +105,15 @@ router.post(
       res.json();
     } catch (err) {
       if (err.name === "ValidationError") {
-        res
-          .status(400)
-          .json({ name: "ValidationError", message: errMsgHandler(err) });
+        err.message = errMsgHandler(err);
+
+        res.status(400).json(err);
       } else {
         sendAnError(err);
 
         res.status(500).json({
           name: "InternalServerError",
-          message: "admin already notified about this error"
+          message: "we already notified about this error"
         });
       }
     }
@@ -145,7 +145,7 @@ router.get("/current/avatar", auth, async (req, res) => {
 
       res.status(500).json({
         name: "InternalServerError",
-        message: "admin already notified about this error"
+        message: "we already notified about this error"
       });
     }
   }
@@ -178,7 +178,7 @@ router.delete("/current/avatar", auth, async (req, res) => {
 
       res.status(500).json({
         name: "InternalServerError",
-        message: "admin already notified about this error"
+        message: "we already notified about this error"
       });
     }
   }

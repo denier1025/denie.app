@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { expiresIn, refreshPeriod } = require("../settings/global");
+const { ATExpiresIn, refreshPeriod } = require("../settings/global");
 const AuthToken = require("../models/AuthToken");
 
 module.exports = async (req, res, next) => {
@@ -28,7 +28,7 @@ module.exports = async (req, res, next) => {
 
     if (!authToken.owner) {
       const error = new Error();
-      error.name = "InconsistencyError";
+      error.name = "NotFoundError";
       error.message = "unable to find a user for an existing token";
       throw error;
     }
@@ -40,11 +40,12 @@ module.exports = async (req, res, next) => {
 
     next();
   } catch (err) {
-    if (err.name === "TokenExpiredError" || err.name === "JsonWebTokenError") {
-      res.status(403).json({
-        name: "AuthorizationError",
-        message: "please, get an authentication"
-      });
+    if (
+      err.name === "TokenExpiredError" ||
+      err.name === "JsonWebTokenError" ||
+      err.name === "NotFoundError"
+    ) {
+      res.status(403).json(err);
     } else {
       next(err);
     }
@@ -71,7 +72,7 @@ module.exports = async (req, res, next) => {
     //       },
     //       jwtSecret,
     //       {
-    //         expiresIn: Date.now() + expiresIn
+    //         expiresIn: Date.now() + ATExpiresIn
     //       }
     //     );
 

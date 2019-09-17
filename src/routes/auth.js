@@ -19,14 +19,17 @@ router.post("/", async (req, res) => {
 
     res.json({ token });
   } catch (err) {
-    if (err.name === "AuthenticationError") {
+    if (
+      err.name === "CredentialsError" ||
+      err.name === "ConfirmationError"
+    ) {
       res.status(401).json(err);
     } else {
       sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",
-        message: "admin already notified about this error"
+        message: "we already notified about this error"
       });
     }
   }
@@ -58,16 +61,13 @@ router.delete("/", auth, async (req, res) => {
     res.status(204).json();
   } catch (err) {
     if (err.name === "QueryStringError") {
-      return res.status(400).json({
-        name: "ValidationError",
-        message: "not valid request"
-      });
+      return res.status(400).json(err);
     } else {
       sendAnError(err);
 
       res.status(500).json({
         name: "InternalServerError",
-        message: "admin already notified about this error"
+        message: "we already notified about this error"
       });
     }
   }
