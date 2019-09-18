@@ -2,8 +2,8 @@ const router = require("express").Router();
 const Task = require("../models/Task");
 const auth = require("../middleware/auth");
 const errMsgHandler = require("../utils/errMsgHandler");
-const checkFieldsForAccess = require("../middleware/checkFieldsForAccess");
-const transformReceivedDataAndSave = require("../middleware/transformReceivedDataAndSave");
+const checkFieldsOnAccess = require("../middleware/checkFieldsOnAccess");
+const transformReceivedData = require("../middleware/transformReceivedData");
 const sendAnError = require("../utils/sendingEmails/error");
 
 // @route   GET api/tasks?completed=true
@@ -85,8 +85,8 @@ router.get("/:id", auth, async (req, res) => {
 router.post(
   "/",
   auth,
-  checkFieldsForAccess,
-  transformReceivedDataAndSave,
+  checkFieldsOnAccess,
+  transformReceivedData,
   async (req, res) => {
     try {
       req.task = await req.task.save();
@@ -94,9 +94,7 @@ router.post(
       res.status(201).json();
     } catch (err) {
       if (err.name === "ValidationError") {
-        err.message = errMsgHandler(err);
-
-        res.status(400).json(err);
+        res.status(400).json({name: err.name, message: errMsgHandler(err)});
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
@@ -117,8 +115,8 @@ router.post(
 router.patch(
   "/:id",
   auth,
-  checkFieldsForAccess,
-  transformReceivedDataAndSave,
+  checkFieldsOnAccess,
+  transformReceivedData,
   async (req, res) => {
     try {
       req.task = await req.task.save();
@@ -128,9 +126,7 @@ router.patch(
       if (err.name === "NotFoundError") {
         res.status(404).json(err);
       } else if (err.name === "ValidationError") {
-        err.message = errMsgHandler(err);
-
-        res.status(400).json(err);
+        res.status(400).json({name: err.name, message: errMsgHandler(err)});
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {

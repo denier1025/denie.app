@@ -166,9 +166,7 @@ router.post("/change", async (req, res) => {
     if (err.name === "NotFoundError") {
       res.status(404).json(err);
     } else if (err.name === "ValidationError") {
-      err.message = errMsgHandler(err);
-
-      res.status(400).json(err);
+      res.status(400).json({name: err.name, message: errMsgHandler(err)});
     } else if (err.name === "ConfirmationError") {
       res.status(400).json(err);
     } else {

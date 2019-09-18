@@ -7,6 +7,9 @@ const User = mongoose.model("User");
 const EmailConfirmationToken = mongoose.model("EmailConfirmationToken");
 const AuthToken = mongoose.model("AuthToken");
 
+jest.mock("../src/utils/sendingEmails/error")
+jest.mock("../src/utils/sendingEmails/confirmationLink")
+
 let firsrUserAuthToken = "";
 
 const firstUser = {

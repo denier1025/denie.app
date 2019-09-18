@@ -3,9 +3,9 @@ const router = require("express").Router();
 const auth = require("../middleware/auth");
 const EmailConfirmationToken = require("../models/EmailConfirmationToken");
 const errMsgHandler = require("../utils/errMsgHandler");
-const upload = require("../middleware/upload");
-const checkFieldsForAccess = require("../middleware/checkFieldsForAccess");
-const transformReceivedDataAndSave = require("../middleware/transformReceivedDataAndSave");
+const swapFieldsAvatarRelated = require("../middleware/swapFieldsAvatarRelated");
+const checkFieldsOnAccess = require("../middleware/checkFieldsOnAccess");
+const transformReceivedData = require("../middleware/transformReceivedData");
 const sendAnError = require("../utils/sendingEmails/error");
 const sendAConfirmationLink = require("../utils/sendingEmails/confirmationLink");
 
@@ -14,8 +14,8 @@ const sendAConfirmationLink = require("../utils/sendingEmails/confirmationLink")
 // @access  Public
 router.post(
   "/",
-  checkFieldsForAccess,
-  transformReceivedDataAndSave,
+  checkFieldsOnAccess,
+  transformReceivedData,
   async (req, res) => {
     try {
       req.user = await req.user.save();
@@ -33,9 +33,7 @@ router.post(
       });
     } catch (err) {
       if (err.name === "ValidationError") {
-        err.message = errMsgHandler(err);
-
-        res.status(400).json(err);
+        res.status(400).json({name: err.name, message: errMsgHandler(err)});
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
@@ -63,8 +61,8 @@ router.get("/current", auth, async (req, res) => {
 router.patch(
   "/current",
   auth,
-  checkFieldsForAccess,
-  transformReceivedDataAndSave,
+  checkFieldsOnAccess,
+  transformReceivedData,
   async (req, res) => {
     try {
       req.user = await req.user.save();
@@ -72,9 +70,7 @@ router.patch(
       res.json(req.user);
     } catch (err) {
       if (err.name === "ValidationError") {
-        err.message = errMsgHandler(err);
-
-        res.status(400).json(err);
+        res.status(400).json({name: err.name, message: errMsgHandler(err)});
       } else if (err.name === "AccessError") {
         res.status(403).json(err);
       } else {
@@ -95,9 +91,9 @@ router.patch(
 router.post(
   "/current/avatar",
   auth,
-  upload,
-  checkFieldsForAccess,
-  transformReceivedDataAndSave,
+  swapFieldsAvatarRelated,
+  checkFieldsOnAccess,
+  transformReceivedData,
   async (req, res) => {
     try {
       await req.avatar.save();
@@ -105,9 +101,7 @@ router.post(
       res.json();
     } catch (err) {
       if (err.name === "ValidationError") {
-        err.message = errMsgHandler(err);
-
-        res.status(400).json(err);
+        res.status(400).json({name: err.name, message: errMsgHandler(err)});
       } else {
         sendAnError(err);
 
