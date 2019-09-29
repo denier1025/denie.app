@@ -1,4 +1,4 @@
 node_modules/
-config/
+src/config/
 
 /client/build

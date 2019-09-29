@@ -7,7 +7,8 @@ module.exports = async () => {
       dbName: "DENIE_DB",
       useNewUrlParser: true,
       useCreateIndex: true,
-      useFindAndModify: false
+      useFindAndModify: false,
+      useUnifiedTopology: true
     });
     console.log("MongoDB is connected!");
   } catch (err) {

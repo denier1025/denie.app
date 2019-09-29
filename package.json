@@ -5,12 +5,17 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "env-cmd -f ./config/dev.env nodemon src/server.js",
-    "test": "env-cmd -f ./config/test.env jest"
+    "server": "nodemon src/server.js",
+    "client": "npm start --prefix client",
+    "dev": "concurrently \"env-cmd -f ./src/config/dev.env npm run server\" \"npm run client\"",
+    "test": "env-cmd -f ./src/config/test.env jest",
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm run build --prefix client"
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["./jest.setup.js"]
+    "setupFilesAfterEnv": [
+      "./jest.setup.js"
+    ]
   },
   "author": "",
   "license": "ISC",
@@ -24,6 +29,7 @@
     "validator": "^11.1.0"
   },
   "devDependencies": {
+    "concurrently": "^4.1.2",
     "env-cmd": "^10.0.1",
     "jest": "^24.9.0",
     "nodemon": "^1.19.1",
