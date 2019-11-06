@@ -1,92 +1,84 @@
+const config = require("config");
 const jwt = require("jsonwebtoken");
-const { ATExpiresIn, refreshPeriod } = require("../settings/global");
 const AuthToken = require("../models/AuthToken");
+const getAccessRights = require("../settings/accessRights/getAccessRights");
 
 module.exports = async (req, res, next) => {
-  let token = req.header("Authorization");
-
-  if (token) {
-    token = token.replace("Bearer ", "");
-  }
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.locals.accessRights = getAccessRights(req.path, req.method);
 
-    const authToken = await AuthToken.findOne({
-      owner: decoded._id,
-      token
-    });
+    if (res.locals.accessRights.routeRights.isPrivate) {
+      let authToken;
 
-    if (!authToken) {
-      const error = new Error();
-      error.name = "JsonWebTokenError";
-      error.message = "no auth token is found";
-      throw error;
+      if (req.body.refreshToken) {
+        const refreshToken = req.body.refreshToken;
+
+        const decoded = jwt.verify(refreshToken, config.get("jwt_secret"));
+
+        res.locals.refreshToken = refreshToken;
+
+        authToken = await AuthToken.findOne({
+          owner: decoded._id,
+          refreshToken: req.body.refreshToken
+        });
+      } else {
+        const token = req.header("Authorization");
+
+        const decoded = jwt.verify(token, config.get("jwt_secret"));
+
+        res.locals.token = token;
+
+        authToken = await AuthToken.findOne({
+          owner: decoded._id,
+          token
+        });
+      }
+
+      if (!authToken) {
+        return res.status(401).send({ name: "NoTokenError", code: "NO_TOKEN" });
+      }
+
+      await authToken.populate("owner").execPopulate();
+
+      if (!authToken.owner) {
+        return res
+          .status(401)
+          .send({ name: "NotFoundError", code: "USER_NOT_FOUND" });
+      }
+
+      if (authToken.owner.disabled > Date.now()) {
+        return res
+          .status(403)
+          .send({ name: "AccessError", code: "ACCOUNT_HAS_BEEN_DISABLED" });
+      }
+
+      req.auth = authToken.owner;
     }
-
-    await authToken.populate("owner").execPopulate();
-
-    if (!authToken.owner) {
-      const error = new Error();
-      error.name = "NotFoundError";
-      error.message = "unable to find a user for an existing token";
-      throw error;
-    }
-
-    // TODO: isFrozen
-
-    req.token = token;
-    req.user = authToken.owner;
 
     next();
   } catch (err) {
-    if (
-      err.name === "TokenExpiredError" ||
-      err.name === "JsonWebTokenError" ||
-      err.name === "NotFoundError"
-    ) {
-      res.status(403).json(err);
+    if (err.name === "NotFoundError") {
+      res.status(404).send(err);
+    } else if (err.name === "NotAllowedError") {
+      res.status(405).send(err);
+    } else if (err.name === "JsonWebTokenError") {
+      res.status(401).send({
+        name: err.name,
+        code: err.message
+          .toUpperCase()
+          .split(" ")
+          .join("_")
+      });
+    } else if (err.name === "TokenExpiredError") {
+      res.status(401).send({
+        name: err.name,
+        code: err.message
+          .toUpperCase()
+          .split(" ")
+          .join("_")
+      });
     } else {
       next(err);
     }
-
-    // if (err.name === "TokenExpiredError") {
-    //   res.status(403).json({
-    //     name: "JsonWebTokenError",
-    //     message: "please, get an authentication",
-    //     code: "JWTE001"
-    //   });
-
-    //   if (Date.now() - Number(err.expiredAt) > refreshPeriod) {
-    //     res.status(403).json({ name: "JsonWebTokenError", message: "please, get an authentication", code: "JWTE001" });
-    //   } else {
-    //     const decoded = jwt.verify(token, jwtSecret, {ignoreExpiration: true});
-
-    //     req.user = decoded;
-
-    //     const newToken = jwt.sign(
-    //       {
-    //         user: {
-    //           _id: decoded._id
-    //         }
-    //       },
-    //       jwtSecret,
-    //       {
-    //         expiresIn: Date.now() + ATExpiresIn
-    //       }
-    //     );
-
-    //     next();
-    //   }
-    // } else if (err.name === "JsonWebTokenError") {
-    //   res.status(403).json({
-    //     name: "JsonWebTokenError",
-    //     message: "please, get an authentication",
-    //     code: "JWTE001"
-    //   });
-    // } else {
-    //   // TODO: send an email
-    //   res.status(500).json(err);
-    // }
   }
 };

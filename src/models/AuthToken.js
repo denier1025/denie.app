@@ -1,5 +1,5 @@
 const { Schema, model } = require("mongoose");
-const { ATExpiresIn } = require("../settings/global");
+const { refreshTokenExp } = require("../settings/global");
 
 const AuthTokenSchema = new Schema({
   owner: {
@@ -11,10 +11,14 @@ const AuthTokenSchema = new Schema({
     type: String,
     required: true
   },
+  refreshToken: {
+    type: String,
+    required: true
+  },
   createdAt: {
     type: Date,
     default: Date.now,
-    expires: ATExpiresIn
+    expires: refreshTokenExp
   }
 });
 

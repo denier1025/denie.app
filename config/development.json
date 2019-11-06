@@ -1,0 +1,10 @@
+{
+  "name": "DENIE.APP - Development",
+  "port": 5000,
+  "mongo_uri": "mongodb+srv://denieapp:denieapp@main-mdrw7.mongodb.net/test?retryWrites=true&w=majority",
+  "jwt_secret": "Df9vFbGB4gFVB5vVBW2d8j4VUtKGu954MdoVoiLil",
+  "email_host": "gmail",
+  "email_user": "denie4925@gmail.com",
+  "email_pass": "cpp711bar9",
+  "dev_email": "denie4925@gmail.com"
+}

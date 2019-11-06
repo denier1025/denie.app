@@ -1,0 +1,5 @@
+{
+  "name": "DENIE.APP - Test",
+  "mongo_uri": "mongodb+srv://denieapptest:denieapptest@main-tcuou.mongodb.net/test?retryWrites=true&w=majority",
+  "jwt_secret": "EN37VHDNEFbGB4gFVB5F8gjhneDJG73NG7DqFe0fVodLLii73d"
+}

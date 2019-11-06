@@ -1,16 +1,22 @@
 require("./settings/mongoose")();
+const debug = require("./settings/debug");
 
 const express = require("express");
 const app = express();
+const helmet = require("helmet");
+const morgan = require("morgan");
 
+app.use(helmet());
 app.use(express.json());
 
-app.use("/api/users", require("./routes/users"));
-app.use("/api/auth", require("./routes/auth"));
-app.use("/api/confirmation", require("./routes/confirmation"));
-app.use("/api/tasks", require("./routes/tasks"));
+if (app.get("env") === "development") {
+  app.use(morgan("dev"));
+  debug("Morgan enabled...");
+}
 
-if (process.env.NODE_ENV === "production") {
+app.use(require("./api/index"));
+
+if (app.get("env") === "production") {
   const path = require("path");
 
   app.use(express.static(path.resolve("client", "build")));
