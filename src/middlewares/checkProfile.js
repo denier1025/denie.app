@@ -3,7 +3,7 @@ const roleTypes = require("../settings/roleTypes");
 module.exports = options => {
   return async (req, res, next) => {
     try {
-      res.locals.profile = await User.findById(req.params.userId).lean();
+      res.locals.profile = await User.findById(req.params.userId);
 
       if (!res.locals.profile) {
         return res
@@ -35,25 +35,35 @@ module.exports = options => {
           });
         }
 
-        if (options.otherMod) {
-          if (
-            res.locals.auth._id !== res.locals.profile._id &&
-            res.locals.auth.role === res.locals.profile.role
-          ) {
-            return res.status(403).send({
-              name: "AccessError",
-              code: "MODIFY_IDENTICAL_ROLE_NOT_ALLOWED"
-            });
-          }
+        if (
+          res.locals.auth._id.toString() !==
+            res.locals.profile._id.toString() &&
+          !options.otherMod
+        ) {
+          return res.status(403).send({
+            name: "AccessError",
+            code: "MODIFY_OTHERS_NOT_ALLOWED"
+          });
+        }
 
-          if (
-            roleTypes[res.locals.auth.role] < roleTypes[res.locals.profile.role]
-          ) {
-            return res.status(403).send({
-              name: "AccessError",
-              code: "MODIFY_HIGH_ORDER_ROLE_NOT_ALLOWED"
-            });
-          }
+        if (
+          res.locals.auth._id.toString() !==
+            res.locals.profile._id.toString() &&
+          res.locals.auth.role === res.locals.profile.role
+        ) {
+          return res.status(403).send({
+            name: "AccessError",
+            code: "MODIFY_IDENTICAL_ROLE_NOT_ALLOWED"
+          });
+        }
+
+        if (
+          roleTypes[res.locals.auth.role] < roleTypes[res.locals.profile.role]
+        ) {
+          return res.status(403).send({
+            name: "AccessError",
+            code: "MODIFY_HIGH_ORDER_ROLE_NOT_ALLOWED"
+          });
         }
       }
 

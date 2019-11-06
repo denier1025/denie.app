@@ -5,8 +5,8 @@ const sendData = (model, allowedToSend) => {
     if (model.forEach) {
       const resultArray = [];
 
-      model.forEach(model => {
-        const dotNotationObject = dotize.convert(model);
+      model.forEach(elem => {
+        const dotNotationObject = dotize.convert(elem);
 
         const resultObject = {};
 
