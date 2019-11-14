@@ -1,8 +1,8 @@
 const User = require("../models/User");
 const sendData = require("../utils/sendData");
 const sendAnError = require("../utils/sendingEmails/error");
-const dotize = require("../utils/dotize")
-const combineData = require("../utils/combineData")
+const dotize = require("../utils/dotize");
+const combineData = require("../utils/combineData");
 
 // @route   GET api/users?disabled=$gt:1572946923995&email.isConfirmed=true
 // @route   GET api/users?sortBy=createdAt:-1
@@ -163,6 +163,72 @@ exports.patchUserDisplayNameController = allowedToSend => {
   };
 };
 
+// @route   PATCH api/users/:userId/emailAddress
+// @desc    Update a user emailAddress
+// @access  Private
+exports.patchUserEmailAddressController = allowedToSend => {
+  return async (req, res) => {
+    try {
+      if (req.body["email.address"] !== res.locals.profile.email.address) {
+        res
+          .status(400)
+          .send({ name: "ConfirmationError", code: "INCORRECT_EMAIL_ADDRESS" });
+      }
+
+      req.body["email.address"] = req.body.new;
+      delete req.body.new;
+
+      combineData(res.locals.profile, dotize.backward(req.body));
+
+      await res.locals.profile.save();
+
+      const data = sendData(res.locals.profile.toObject(), allowedToSend);
+      data ? res.send(data) : res.end();
+    } catch (err) {
+      sendAnError(err);
+
+      res.status(500).send({
+        name: "InternalServerError",
+        code: "INTERNAL_SERVER_ERROR"
+      });
+    }
+  };
+};
+
+// @route   PATCH api/users/:userId/password
+// @desc    Update a user password
+// @access  Private
+exports.patchUserPasswordController = allowedToSend => {
+  return async (req, res) => {
+    try {
+      const isMatch = res.locals.profile.comparePasswords(req.body.password);
+
+      if (!isMatch) {
+        res
+          .status(400)
+          .send({ name: "ConfirmationError", code: "INCORRECT_PASSWORD" });
+      }
+
+      req.body.password = req.body.new;
+      delete req.body.new;
+
+      combineData(res.locals.profile, dotize.backward(req.body));
+
+      await res.locals.profile.save();
+
+      const data = sendData(res.locals.profile.toObject(), allowedToSend);
+      data ? res.send(data) : res.end();
+    } catch (err) {
+      sendAnError(err);
+
+      res.status(500).send({
+        name: "InternalServerError",
+        code: "INTERNAL_SERVER_ERROR"
+      });
+    }
+  };
+};
+
 // @route   DELETE api/users/:userId
 // @desc    Delete a user
 // @access  Private
@@ -170,6 +236,31 @@ exports.deleteUserController = allowedToSend => {
   return async (req, res) => {
     try {
       await res.locals.profile.deleteOne();
+
+      const data = sendData(res.locals.profile.toObject(), allowedToSend);
+      data ? res.status(200).send(data) : res.status(204).end();
+    } catch (err) {
+      sendAnError(err);
+
+      res.status(500).send({
+        name: "InternalServerError",
+        code: "INTERNAL_SERVER_ERROR"
+      });
+    }
+  };
+};
+
+// @route   DELETE api/users/:userId/displayName
+// @desc    Delete a user displayName
+// @access  Private
+exports.deleteUserDisplayNameController = allowedToSend => {
+  return async (req, res) => {
+    try {
+      res.locals.profile.displayName = Buffer.from(
+        res.locals.profile._id.toString()
+      ).toString("base64");
+
+      await res.locals.profile.save();
 
       const data = sendData(res.locals.profile.toObject(), allowedToSend);
       data ? res.status(200).send(data) : res.status(204).end();

@@ -80,6 +80,10 @@ UserSchema.pre("save", async function(next) {
   next();
 });
 
+UserSchema.methods.comparePasswords = async plain => {
+  return await bcryptjs.compare(plain, this.password);
+};
+
 UserSchema.statics.findByCredentials = async ({
   email: { address },
   password
@@ -95,7 +99,7 @@ UserSchema.statics.findByCredentials = async ({
     throw error;
   }
 
-  const isMatch = await bcryptjs.compare(password, profile.password);
+  const isMatch = profile.comparePasswords(password);
 
   if (!isMatch) {
     const error = new Error();

@@ -218,5 +218,33 @@ module.exports = {
     body: Joi.object({
       displayName: displayNameJoiSchema
     })
+  },
+  patchUserEmailAddressJoiSchema: {
+    params: Joi.object({
+      userId: userIdJoiSchema
+    }),
+    body: Joi.object({
+      "email.address": emailAddressJoiSchema,
+      new: emailAddressJoiSchema
+    }).with("email.address", "new")
+  },
+  patchUserPasswordJoiSchema: {
+    params: Joi.object({
+      userId: userIdJoiSchema
+    }),
+    body: Joi.object({
+      password: passwordJoiSchema,
+      new: passwordJoiSchema
+    }).with("password", "new")
+  },
+  deleteUserJoiSchema: {
+    params: Joi.object({
+      userId: userIdJoiSchema
+    })
+  },
+  deleteUserDisplayNameJoiSchema: {
+    params: Joi.object({
+      userId: userIdJoiSchema
+    })
   }
 };

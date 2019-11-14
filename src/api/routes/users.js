@@ -20,7 +20,11 @@ const {
   getUsersJoiSchema,
   getUserJoiSchema,
   postUserJoiSchema,
-  patchUserDisplayNameJoiSchema
+  patchUserDisplayNameJoiSchema,
+  patchUserEmailAddressJoiSchema,
+  patchUserPasswordJoiSchema,
+  deleteUserJoiSchema,
+  deleteUserDisplayNameJoiSchema
 } = require("../../settings/joiSchemas/users");
 
 const {
@@ -29,7 +33,10 @@ const {
   getUserController,
   postUserController,
   patchUserDisplayNameController,
-  deleteUserController
+  patchUserEmailAddressController,
+  patchUserPasswordController,
+  deleteUserController,
+  deleteUserDisplayNameController
 } = require("../../controllers/users");
 
 router.get(
@@ -144,11 +151,68 @@ router.patch(
   patchUserDisplayNameController(["displayName"])
 );
 
+router.patch(
+  "/users/:userId/emailAddress",
+  [
+    auth,
+    checkRole(["user", "mod", "moderator", "admin", "administrator"]),
+    checkStructure({
+      query: [],
+      body: ["email.address", "new"]
+    }),
+    validation({
+      schema: patchUserEmailAddressJoiSchema,
+      validationPlaces: ["params", "body"],
+      uniqueFields: { params: [], query: [], body: ["new"] },
+      model: User
+    }),
+    checkProfile({
+      readable: false,
+      selfMod: true,
+      otherMod: false
+    })
+  ],
+  patchUserEmailAddressController(["email.address"])
+);
+
+router.patch(
+  "/users/:userId/password",
+  [
+    auth,
+    checkRole(["user", "mod", "moderator", "admin", "administrator"]),
+    checkStructure({
+      query: [],
+      body: ["password", "new"]
+    }),
+    validation({
+      schema: patchUserPasswordJoiSchema,
+      validationPlaces: ["params", "body"],
+      uniqueFields: { params: [], query: [], body: [] },
+      model: User
+    }),
+    checkProfile({
+      readable: false,
+      selfMod: true,
+      otherMod: false
+    })
+  ],
+  patchUserPasswordController([])
+);
+
+// "/users/:userId/disabled"
+// "/users/:userId/role"
+
 router.delete(
   "/users/:userId",
   [
     auth,
     checkRole(["administrator"]),
+    validation({
+      schema: deleteUserJoiSchema,
+      validationPlaces: ["params"],
+      uniqueFields: { params: ["userId"], query: [], body: [] },
+      model: User
+    }),
     checkProfile({
       readable: false,
       selfMod: false,
@@ -156,6 +220,26 @@ router.delete(
     })
   ],
   deleteUserController([])
+);
+
+router.delete(
+  "/users/:userId/displayName",
+  [
+    auth,
+    checkRole(["mod", "moderator", "admin", "administrator"]),
+    validation({
+      schema: deleteUserDisplayNameJoiSchema,
+      validationPlaces: ["params"],
+      uniqueFields: { params: [], query: [], body: [] },
+      model: User
+    }),
+    checkProfile({
+      readable: false,
+      selfMod: false,
+      otherMod: true
+    })
+  ],
+  deleteUserDisplayNameController([])
 );
 
 // // @route   GET api/users/current
@@ -178,29 +262,29 @@ router.delete(
 //   }
 // });
 
-// @route   PATCH api/users/current
-// @desc    Update a current user's fields
-// @access  Private
-router.patch("/users/current", async (req, res) => {
-  try {
-    combineData(req.auth, dotize.backward(req.body));
+// // @route   PATCH api/users/current
+// // @desc    Update a current user's fields
+// // @access  Private
+// router.patch("/users/current", async (req, res) => {
+//   try {
+//     combineData(req.auth, dotize.backward(req.body));
 
-    await req.auth.save();
+//     await req.auth.save();
 
-    const data = sendData(
-      req.auth.toObject(),
-      res.locals.roleRights.allowedToSend
-    );
-    data ? res.send(data) : res.end();
-  } catch (err) {
-    sendAnError(err);
+//     const data = sendData(
+//       req.auth.toObject(),
+//       res.locals.roleRights.allowedToSend
+//     );
+//     data ? res.send(data) : res.end();
+//   } catch (err) {
+//     sendAnError(err);
 
-    res.status(500).send({
-      name: "InternalServerError",
-      code: "INTERNAL_SERVER_ERROR"
-    });
-  }
-});
+//     res.status(500).send({
+//       name: "InternalServerError",
+//       code: "INTERNAL_SERVER_ERROR"
+//     });
+//   }
+// });
 
 // // @route   GET api/users
 // // @desc    Fetch all users
@@ -246,48 +330,48 @@ router.patch("/users/current", async (req, res) => {
 //   }
 // });
 
-// @route   PATCH api/users/:userId
-// @desc    Update a user
-// @access  Private
-router.patch("/users/:userId", async (req, res) => {
-  try {
-    const profile = await User.findById(req.params.userId);
+// // @route   PATCH api/users/:userId
+// // @desc    Update a user
+// // @access  Private
+// router.patch("/users/:userId", async (req, res) => {
+//   try {
+//     const profile = await User.findById(req.params.userId);
 
-    if (!profile) {
-      return res
-        .status(404)
-        .send({ name: "NotFoundError", code: "USER_NOT_FOUND" });
-    }
+//     if (!profile) {
+//       return res
+//         .status(404)
+//         .send({ name: "NotFoundError", code: "USER_NOT_FOUND" });
+//     }
 
-    checkSubordination(
-      req.auth,
-      profile,
-      res.locals.roleRights.subordination,
-      req.body.role
-    );
+//     checkSubordination(
+//       req.auth,
+//       profile,
+//       res.locals.roleRights.subordination,
+//       req.body.role
+//     );
 
-    combineData(profile, dotize.backward(req.body));
+//     combineData(profile, dotize.backward(req.body));
 
-    await profile.save();
+//     await profile.save();
 
-    const data = sendData(
-      profile.toObject(),
-      res.locals.roleRights.allowedToSend
-    );
-    data ? res.send(data) : res.end();
-  } catch (err) {
-    if (err.name === "AccessError") {
-      res.status(403).send(err);
-    } else {
-      sendAnError(err);
+//     const data = sendData(
+//       profile.toObject(),
+//       res.locals.roleRights.allowedToSend
+//     );
+//     data ? res.send(data) : res.end();
+//   } catch (err) {
+//     if (err.name === "AccessError") {
+//       res.status(403).send(err);
+//     } else {
+//       sendAnError(err);
 
-      res.status(500).send({
-        name: "InternalServerError",
-        code: "INTERNAL_SERVER_ERROR"
-      });
-    }
-  }
-});
+//       res.status(500).send({
+//         name: "InternalServerError",
+//         code: "INTERNAL_SERVER_ERROR"
+//       });
+//     }
+//   }
+// });
 
 // // @route   DELETE api/users/:userId
 // // @desc    Delete a user
