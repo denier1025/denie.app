@@ -24,7 +24,7 @@
     "bcryptjs": "^2.4.3",
     "config": "^3.2.3",
     "debug": "^4.1.1",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "helmet": "^3.21.1",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.7.6",
